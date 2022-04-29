@@ -10,8 +10,9 @@ public class Test {
                         "class Test {       \n" +
                         "  var abc = 2 + 1.3 * 4;\n" +
                         "  var s = \"hello\"    \n" +
-                        "  3<=5;   8.8.8   abc_def  _ok  v8  #  " +
+                        "  3<=5;   8.8.8   abc_def  _ok  v8    " +
                         "}";
+       // testProgram = "//   ;";
         System.out.println("------");
         System.out.println(testProgram);
         System.out.println("======");

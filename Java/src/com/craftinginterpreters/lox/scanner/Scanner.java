@@ -8,6 +8,7 @@ import static com.craftinginterpreters.lox.scanner.Type.*;
 public class Scanner {
     private final String source;
     private final List<Token> tokenList = new ArrayList<>();
+    private int mark;
     private int cursor;
     private int lineNumber;
     private boolean hasError;
@@ -28,7 +29,6 @@ public class Scanner {
         return c >= '0' && c <= '9';
     }
 
-
     private String peekTwo() {
         if (cursor + 2 > source.length()) {
             return null;
@@ -37,44 +37,36 @@ public class Scanner {
         return source.substring(cursor, cursor + 2);
     }
 
-    private char advance() {
-        char ret;
-
+    private char peek() {
         if (cursor < source.length()) {
-            ret = source.charAt(cursor);
+            return source.charAt(cursor);
         } else {
-            ret = '\0';
+            return '\0';
         }
-
-        cursor++;
-
-        return ret;
     }
 
-    private void consume(int count) {
-        if (cursor < 0 || cursor >= source.length()
-                || cursor + count < 1 || cursor + count > source.length()) {
-            error("Scanner.scan() bug.");
+    private void consume() {
+        if (mark >= source.length() || cursor < 1 || cursor > source.length()) {
+            error("Scanner bug.");
             return;
         }
 
-        String s = source.substring(cursor, cursor + count);
+        String s = source.substring(mark, cursor);
         Type type = Type.from(s);
         if (type == null) {
             char c = s.charAt(0);
             if (isAlphabetic(c)) {
                 type = IDENTIFIER;
-            } else if (c == '"' && s.charAt(count - 1) == '"') {
+            } else if (c == '"' && s.charAt(s.length() - 1) == '"') {
                 type = STRING;
             } else if (isDigit(c)) {
                 type = NUMBER;
             } else {
-                error("Scanner.scan() bug.");
+                error("Scanner bug.");
             }
         }
 
         tokenList.add(new Token(type, s));
-        cursor += count;
     }
 
     private void error(String msg) {
@@ -94,30 +86,35 @@ public class Scanner {
             System.out.print(" ");
         }
         System.out.println("^ " + (msg != null ? msg : ""));
+
         System.exit(65);
     }
 
     private void handleComment() {
-        advance();
-        advance();
+        cursor++;
+
         while (true) {
-            char c = advance();
+            cursor++;
+            char c = peek();
             if (c == '\n') {
+                cursor++;
                 lineNumber++;
-                break;
+                return;
             }
             if (c == '\0') {
-                break;
+                return;
             }
         }
     }
 
     private void handleString() {
-        int mark = cursor;
-        advance();
+        mark = cursor;
+
         while (true) {
-            char c = advance();
+            cursor++;
+            char c = peek();
             if (c == '"') {
+                cursor++;
                 break;
             } else if (c == '\n') {
                 lineNumber++;
@@ -126,38 +123,37 @@ public class Scanner {
                 return;
             }
         }
-        int consumeCount = cursor - mark;
-        cursor = mark;
-        consume(consumeCount);
+
+        consume();
     }
 
     private void handleIdentifierOrKeyword() {
-        int mark = cursor;
-        advance();
+        mark = cursor;
+
         while (true) {
-            char c = advance();
+            cursor++;
+            char c = peek();
             if (!isAlphabetic(c) && !isDigit(c)) {
                 break;
             }
         }
-        int consumeCount = cursor - mark - 1;
-        cursor = mark;
-        consume(consumeCount);
+
+        consume();
     }
 
     private void handleNumber() {
-        int mark = cursor;
-        advance();
+        mark = cursor;
 
         boolean dotPassed = false;
         while (true) {
-            char c = advance();
+            cursor++;
+            char c = peek();
             if (dotPassed) {
-                if (!Character.isDigit(c)) {
+                if (!isDigit(c)) {
                     break;
                 }
             } else {
-                if (!Character.isDigit(c) && c != '.') {
+                if (!isDigit(c) && c != '.') {
                     break;
                 }
                 if (c == '.') {
@@ -165,18 +161,21 @@ public class Scanner {
                 }
             }
         }
-        int consumeCount = cursor - mark - 1;
-        cursor = mark;
-        consume(consumeCount);
+
+        consume();
     }
 
     private void handleOperatorOrPunctuation() {
+        mark = cursor;
+
         Type type = Type.from(source.substring(cursor, cursor + 1));
         if (type != null) {
             if (type.peekTwoRequired() && Type.from(peekTwo()) != null) {
-                consume(2);
+                cursor += 2;
+                consume();
             } else {
-                consume(1);
+                cursor += 1;
+                consume();
             }
         } else {
             error("Char not allowed here.");
@@ -188,10 +187,10 @@ public class Scanner {
             char c = source.charAt(cursor);
 
             if (c == ' ' || c == '\t' || c == '\r') {
-                advance();
+                cursor++;
             } else if (c == '\n') {
+                cursor++;
                 lineNumber++;
-                advance();
             } else if (c == '/' && "//".equals(peekTwo())) {
                 handleComment();
             } else if (c == '"') {

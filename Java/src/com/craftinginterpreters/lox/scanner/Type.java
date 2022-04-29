@@ -26,7 +26,7 @@ enum Type {
 
     EOF(null);
 
-    private static Map<String, Type> map = new HashMap<>();
+    private final static Map<String, Type> map = new HashMap<>();
 
     static {
         Type[] values = values();
@@ -37,7 +37,7 @@ enum Type {
         }
     }
 
-    private String text;
+    private final String text;
 
     Type(String text) {
         this.text = text;
