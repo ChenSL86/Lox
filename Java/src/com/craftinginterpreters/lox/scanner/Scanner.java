@@ -66,7 +66,7 @@ public class Scanner {
             }
         }
 
-        tokenList.add(new Token(type, s));
+        tokenList.add(new Token(type, s, tokenList.size()));
     }
 
     private void error(String msg) {
@@ -204,6 +204,6 @@ public class Scanner {
             }
         }
 
-        tokenList.add(new Token(EOF, ""));
+        tokenList.add(new Token(EOF, "", tokenList.size()));
     }
 }
