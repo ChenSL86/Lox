@@ -21,6 +21,9 @@ public class Parser {
     private final TokenContainer termOperatorContainer = new TokenContainer(new Queue<>(), 2);
     private final TokenContainer comparisonOperatorContainer = new TokenContainer(new Queue<>(), 2);
     private final TokenContainer equalityOperatorContainer = new TokenContainer(new Queue<>(), 2);
+    private final TokenContainer andOperatorContainer = new TokenContainer(new Queue<>(), 2);
+    private final TokenContainer orOperatorContainer = new TokenContainer(new Queue<>(), 2);
+
     private final List<TokenContainer> operatorContainerList = new ArrayList<>();
     private Expr parseResult;
 
@@ -30,6 +33,8 @@ public class Parser {
         operatorContainerList.add(termOperatorContainer);
         operatorContainerList.add(comparisonOperatorContainer);
         operatorContainerList.add(equalityOperatorContainer);
+        operatorContainerList.add(andOperatorContainer);
+        operatorContainerList.add(orOperatorContainer);
     }
 
     public Parser(List<Token> tokenList) {
@@ -50,8 +55,7 @@ public class Parser {
     private void error(String msg) {
         System.out.println(msg);
         System.out.println(workingList);
-        throw new RuntimeException();
-        // todo System.exit(65);
+        System.exit(65);
     }
 
     private int find(Direction direction, int start, int end, int index) {
@@ -77,7 +81,7 @@ public class Parser {
             if (obj instanceof Token) {
                 obj = tokenToExpr((Token) obj);
             }
-            if ((obj instanceof Expr)) {
+            if (obj instanceof Expr) {
                 return (Expr) obj;
             }
         }
@@ -86,11 +90,13 @@ public class Parser {
     }
 
     private Expr.Literal tokenToExpr(Token token) {
-        if (token.getType() != Type.NUMBER) {
-            error(String.format("Number required, but get %s.", token));
-            return null;
-        } else {
+        Type tokenType = token.getType();
+        if (tokenType == Type.NUMBER || tokenType == Type.STRING
+                || tokenType == Type.TRUE || tokenType == Type.FALSE || tokenType == Type.NIL) {
             return new Expr.Literal(token);
+        } else {
+            error(tokenType + " is not value.");
+            return null;
         }
     }
 
@@ -178,6 +184,10 @@ public class Parser {
                     break;
 
                 case NUMBER:
+                case STRING:
+                case TRUE:
+                case FALSE:
+                case NIL:
                     break;
 
                 case LEFT_PAREN:
@@ -227,6 +237,14 @@ public class Parser {
                 case EQUAL_EQUAL:
                 case BANG_EQUAL:
                     equalityOperatorContainer.push(token);
+                    break;
+
+                case AND:
+                    andOperatorContainer.push(token);
+                    break;
+
+                case OR:
+                    orOperatorContainer.push(token);
                     break;
 
                 case EOF:

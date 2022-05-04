@@ -3,6 +3,8 @@ package com.craftinginterpreters.lox.expr;
 import com.craftinginterpreters.lox.scanner.Token;
 
 public abstract class Expr {
+    public abstract <R> R accept(ExprVisitor<R> visitor) throws Exception;
+
     public static class Literal extends Expr {
         private final Token token;
 
@@ -10,9 +12,17 @@ public abstract class Expr {
             this.token = token;
         }
 
+        public Token getToken() {
+            return token;
+        }
+
         @Override
         public String toString() {
             return token.getText();
+        }
+
+        public <R> R accept(ExprVisitor<R> visitor) throws Exception {
+            return visitor.visitLiteral(this);
         }
     }
 
@@ -25,9 +35,21 @@ public abstract class Expr {
             this.right = right;
         }
 
+        public Token getOperator() {
+            return operator;
+        }
+
+        public Expr getRight() {
+            return right;
+        }
+
         @Override
         public String toString() {
             return String.format("[%s%s]", operator.getText(), right);
+        }
+
+        public <R> R accept(ExprVisitor<R> visitor) throws Exception {
+            return visitor.visitUnary(this);
         }
     }
 
@@ -42,9 +64,25 @@ public abstract class Expr {
             this.right = right;
         }
 
+        public Expr getLeft() {
+            return left;
+        }
+
+        public Token getOperator() {
+            return operator;
+        }
+
+        public Expr getRight() {
+            return right;
+        }
+
         @Override
         public String toString() {
             return String.format("[%s %s %s]", left, operator.getText(), right);
+        }
+
+        public <R> R accept(ExprVisitor<R> visitor) throws Exception {
+            return visitor.visitBinary(this);
         }
     }
 
@@ -55,9 +93,17 @@ public abstract class Expr {
             this.expr = expr;
         }
 
+        public Expr getExpr() {
+            return expr;
+        }
+
         @Override
         public String toString() {
             return String.format("(%s)", expr);
+        }
+
+        public <R> R accept(ExprVisitor<R> visitor) throws Exception {
+            return visitor.visitGrouping(this);
         }
     }
 }
