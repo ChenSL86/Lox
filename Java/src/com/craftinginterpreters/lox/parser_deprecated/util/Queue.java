@@ -1,4 +1,4 @@
-package com.craftinginterpreters.lox.parser.util;
+package com.craftinginterpreters.lox.parser_deprecated.util;
 
 public class Queue<E> extends Container.AbstractContainer<E> {
     @Override

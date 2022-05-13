@@ -1,4 +1,4 @@
-package com.craftinginterpreters.lox.parser.util;
+package com.craftinginterpreters.lox.parser_deprecated.util;
 
 import com.craftinginterpreters.lox.expr.Expr;
 import com.craftinginterpreters.lox.scanner.Token;

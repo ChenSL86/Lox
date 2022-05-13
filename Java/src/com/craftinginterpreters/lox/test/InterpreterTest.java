@@ -1,5 +1,6 @@
 package com.craftinginterpreters.lox.test;
 
+import com.craftinginterpreters.lox.expr.Expr;
 import com.craftinginterpreters.lox.interpreter.Interpreter;
 import com.craftinginterpreters.lox.parser.Parser;
 import com.craftinginterpreters.lox.scanner.Scanner;
@@ -9,7 +10,7 @@ import java.util.List;
 
 public class InterpreterTest {
     public static void main(String[] args) throws Exception {
-        String testProgram = "true and false";
+        String testProgram = " 1 < 2 and 2 > 3";
 
         Scanner scanner = new Scanner(testProgram);
         scanner.scan();
@@ -17,11 +18,10 @@ public class InterpreterTest {
         System.out.println(tokenList);
 
         Parser parser = new Parser(tokenList);
-        parser.parse();
-        System.out.println(parser.getWorkingList());
-        System.out.println(parser.getParseResult());
+        Expr expr = parser.expression();
+        System.out.println(expr);
 
         Interpreter interpreter = new Interpreter();
-        System.out.println(interpreter.interprete(parser.getParseResult()));
+        System.out.println(interpreter.interprete(expr));
     }
 }

@@ -1,4 +1,4 @@
-package com.craftinginterpreters.lox.parser.util;
+package com.craftinginterpreters.lox.parser_deprecated.util;
 
 import java.util.LinkedList;
 

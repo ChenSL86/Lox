@@ -16,8 +16,11 @@ public class ParserTest {
         System.out.println(tokenList);
 
         Parser parser = new Parser(tokenList);
-        parser.parse();
-        System.out.println(parser.getWorkingList());
-        System.out.println(parser.getParseResult());
+        System.out.println(parser.expression());
+
+        com.craftinginterpreters.lox.parser_deprecated.Parser parser1
+                = new com.craftinginterpreters.lox.parser_deprecated.Parser(tokenList);
+        parser1.parse();
+        System.out.println(parser1.getParseResult());
     }
 }

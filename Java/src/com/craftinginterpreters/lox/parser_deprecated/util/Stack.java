@@ -1,4 +1,4 @@
-package com.craftinginterpreters.lox.parser.util;
+package com.craftinginterpreters.lox.parser_deprecated.util;
 
 public class Stack<E> extends Container.AbstractContainer<E> {
     @Override

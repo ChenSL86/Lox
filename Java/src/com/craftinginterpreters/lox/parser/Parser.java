@@ -1,265 +1,171 @@
 package com.craftinginterpreters.lox.parser;
 
 import com.craftinginterpreters.lox.expr.Expr;
-import com.craftinginterpreters.lox.parser.util.Container;
-import com.craftinginterpreters.lox.parser.util.Queue;
-import com.craftinginterpreters.lox.parser.util.Stack;
-import com.craftinginterpreters.lox.parser.util.TokenContainer;
 import com.craftinginterpreters.lox.scanner.Token;
 import com.craftinginterpreters.lox.scanner.Type;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class Parser {
-    private final List<Token> tokenList;
-    private final List<Object> workingList;
-    private final Container<Token> parenBuffer = new Stack<>();
-    private final TokenContainer unaryOperatorContainer = new TokenContainer(new Stack<>(), 1);
-    private final TokenContainer factorOperatorContainer = new TokenContainer(new Queue<>(), 2);
-    private final TokenContainer termOperatorContainer = new TokenContainer(new Queue<>(), 2);
-    private final TokenContainer comparisonOperatorContainer = new TokenContainer(new Queue<>(), 2);
-    private final TokenContainer equalityOperatorContainer = new TokenContainer(new Queue<>(), 2);
-    private final TokenContainer andOperatorContainer = new TokenContainer(new Queue<>(), 2);
-    private final TokenContainer orOperatorContainer = new TokenContainer(new Queue<>(), 2);
+    private List<Token> tokenList;
 
-    private final List<TokenContainer> operatorContainerList = new ArrayList<>();
-    private Expr parseResult;
-
-    {
-        operatorContainerList.add(unaryOperatorContainer);
-        operatorContainerList.add(factorOperatorContainer);
-        operatorContainerList.add(termOperatorContainer);
-        operatorContainerList.add(comparisonOperatorContainer);
-        operatorContainerList.add(equalityOperatorContainer);
-        operatorContainerList.add(andOperatorContainer);
-        operatorContainerList.add(orOperatorContainer);
-    }
+    private int cursor;
 
     public Parser(List<Token> tokenList) {
         this.tokenList = tokenList;
-        workingList = tokenList.stream()
-                .filter(token -> token.getType() != Type.EOF)
-                .collect(Collectors.toList());
     }
 
-    public List<Object> getWorkingList() {
-        return new ArrayList<>(workingList);
+    public Expr expression() {
+        return assignment();
     }
 
-    public Expr getParseResult() {
-        return parseResult;
+    //todo
+    private Expr assignment() {
+        return logicOr();
     }
 
-    private void error(String msg) {
-        System.out.println(msg);
-        System.out.println(workingList);
-        System.exit(65);
-    }
+    private Expr logicOr() {
+        Expr expr = logicAnd();
 
-    private int find(Direction direction, int start, int end, int index) {
-        int delta = direction == Direction.LEFT ? -1 : 1;
-        while (true) {
-            index += delta;
-            if (start <= index && index < end) {
-                Object obj = workingList.get(index);
-                if (obj instanceof Token || obj instanceof Expr) {
-                    return index;
-                }
-            } else {
-                break;
-            }
+        while (match(peek(), Type.OR)) {
+            Token token = peek();
+            cursor++;
+            Expr right = logicAnd();
+            expr = new Expr.Binary(expr, token, right);
         }
 
-        return -1;
+        return expr;
     }
 
-    private Expr getExprAtIndex(int index) {
-        if (0 <= index && index < workingList.size()) {
-            Object obj = workingList.get(index);
-            if (obj instanceof Token) {
-                obj = tokenToExpr((Token) obj);
+    private Expr logicAnd() {
+        Expr expr = equality();
+
+        while (match(peek(), Type.AND)) {
+            Token token = peek();
+            cursor++;
+            Expr right = equality();
+            expr = new Expr.Binary(expr, token, right);
+        }
+
+        return expr;
+    }
+
+    private Expr equality() {
+        Expr expr = comparison();
+
+        while (match(peek(), Type.BANG_EQUAL, Type.EQUAL_EQUAL)) {
+            Token token = peek();
+            cursor++;
+            Expr right = comparison();
+            expr = new Expr.Binary(expr, token, right);
+        }
+
+        return expr;
+    }
+
+    private Expr comparison() {
+        Expr expr = term();
+
+        while (match(peek(),
+                Type.GREATER, Type.GREATER_EQUAL,
+                Type.LESS, Type.LESS_EQUAL)) {
+            Token token = peek();
+            cursor++;
+            Expr right = term();
+            expr = new Expr.Binary(expr, token, right);
+        }
+
+        return expr;
+    }
+
+
+    private Expr term() {
+        Expr expr = factor();
+
+        while (match(peek(), Type.MINUS, Type.PLUS)) {
+            Token token = peek();
+            cursor++;
+            Expr right = factor();
+            expr = new Expr.Binary(expr, token, right);
+        }
+
+        return expr;
+    }
+
+    private Expr factor() {
+        Expr expr = unary();
+
+        while (match(peek(), Type.SLASH, Type.STAR)) {
+            Token token = peek();
+            cursor++;
+            Expr right = unary();
+            expr = new Expr.Binary(expr, token, right);
+        }
+
+        return expr;
+    }
+
+    private Expr unary() {
+        if (match(peek(), Type.BANG, Type.MINUS)) {
+            Token token = peek();
+            cursor++;
+            Expr right = unary();
+            return new Expr.Unary(token, right);
+        } else {
+            return call();
+        }
+    }
+
+    // todo
+    private Expr call() {
+        return primary();
+    }
+
+    private Expr primary() {
+        if (match(peek(),
+                Type.TRUE, Type.FALSE, Type.NIL, //todo
+                Type.NUMBER, Type.STRING, Type.IDENTIFIER)) {
+            Token token = peek();
+            cursor++;
+            return new Expr.Literal(token);
+        } else if (match(peek(), Type.LEFT_PAREN)) {
+            cursor++;
+            Expr expr = expression();
+            if (match(peek(), Type.RIGHT_PAREN)) {
+                cursor++;
+                return new Expr.Grouping(expr);
+            } else {
+                error("Right paren required.");
             }
-            if (obj instanceof Expr) {
-                return (Expr) obj;
-            }
+        } else {
+            error("Token not expected.");
         }
 
         return null;
     }
 
-    private Expr.Literal tokenToExpr(Token token) {
-        Type tokenType = token.getType();
-        if (tokenType == Type.NUMBER || tokenType == Type.STRING
-                || tokenType == Type.TRUE || tokenType == Type.FALSE || tokenType == Type.NIL) {
-            return new Expr.Literal(token);
+
+    private void error(String msg) {
+        throw new RuntimeException(msg);
+    }
+
+
+    private Token peek() {
+        if (cursor < tokenList.size()) {
+            return tokenList.get(cursor);
         } else {
-            error(tokenType + " is not value.");
+            error("Bug.");
             return null;
         }
     }
 
-    private void handle(Token rightParen) {
-        int start;
-        int end;
-        Token leftParen = null;
-        if (rightParen != null && rightParen.getType() == Type.RIGHT_PAREN) {
-            if (parenBuffer.size() == 0) {
-                error("Paren not matched.");
-                return;
-            } else {
-                leftParen = parenBuffer.pop();
-                start = leftParen.getIndexInTokenList() + 1;
-                end = rightParen.getIndexInTokenList();
-            }
-        } else if (rightParen == null) {
-            if (parenBuffer.size() != 0) {
-                error("Paren not matched.");
-                return;
-            } else {
-                start = 0;
-                end = workingList.size();
-            }
-        } else {
-            error("Bug : %s not allowed for Parser.handle(Token)");
-            return;
-        }
-
-        for (TokenContainer operatorContainer : operatorContainerList) {
-            int operandCountRequired = operatorContainer.getOperandCountRequired();
-
-            while (operatorContainer.size() > 0) {
-                if (operatorContainer.peek().getIndexInTokenList() < start
-                        || operatorContainer.peek().getIndexInTokenList() >= end) {
-                    break;
-                }
-                Token operator = operatorContainer.pop();
-
-                if (operandCountRequired == 1) {
-                    int index = find(Direction.RIGHT, start, end, operator.getIndexInTokenList());
-                    Expr expr = getExprAtIndex(index);
-                    workingList.set(operator.getIndexInTokenList(), new Expr.Unary(operator, expr));
-                    workingList.set(index, null);
-                } else if (operandCountRequired == 2) {
-                    int leftIndex = find(Direction.LEFT, start, end, operator.getIndexInTokenList());
-                    Expr leftExpr = getExprAtIndex(leftIndex);
-
-                    int rightIndex = find(Direction.RIGHT, start, end, operator.getIndexInTokenList());
-                    Expr rightExpr = getExprAtIndex(rightIndex);
-
-                    workingList.set(operator.getIndexInTokenList(),
-                            new Expr.Binary(leftExpr, operator, rightExpr));
-                    workingList.set(leftIndex, null);
-                    workingList.set(rightIndex, null);
-                } else {
-                    error("Bug.");
-                }
+    private boolean match(Token token, Type... types) {
+        for (Type type : types) {
+            if (token.getType().equals(type)) {
+                return true;
             }
         }
 
-        int index = find(Direction.LEFT, start, end, end);
-        Expr expr = getExprAtIndex(index);
-
-        if (rightParen != null) {
-            if (expr == null) {
-                error("Empty paren pair.");
-            }
-
-            workingList.set(leftParen.getIndexInTokenList(), new Expr.Grouping(expr));
-            for (int i = leftParen.getIndexInTokenList() + 1; i < rightParen.getIndexInTokenList(); i++) {
-                workingList.set(i, null);
-            }
-            workingList.set(rightParen.getIndexInTokenList(), null);
-        } else {
-            index = find(Direction.LEFT, 0, workingList.size(), workingList.size());
-            parseResult = getExprAtIndex(index);
-        }
-    }
-
-    public void parse() {
-        for (Token token : tokenList) {
-            switch (token.getType()) {
-                case IDENTIFIER://todo
-                    break;
-
-                case NUMBER:
-                case STRING:
-                case TRUE:
-                case FALSE:
-                case NIL:
-                    break;
-
-                case LEFT_PAREN:
-                    parenBuffer.push(token);
-                    break;
-
-                case RIGHT_PAREN:
-                    handle(token);
-                    break;
-
-                case BANG:
-                    unaryOperatorContainer.push(token);
-                    break;
-
-                case MINUS: {
-                    int leftIndex = token.getIndexInTokenList() - 1;
-                    Type leftTokenType = null;
-                    if (leftIndex >= 0) {
-                        leftTokenType = tokenList.get(leftIndex).getType();
-                    }
-
-                    // todo
-                    if (leftTokenType == Type.RIGHT_PAREN || leftTokenType == Type.NUMBER) {
-                        termOperatorContainer.push(token);
-                    } else {
-                        unaryOperatorContainer.push(token);
-                    }
-                }
-                break;
-
-                case SLASH:
-                case STAR:
-                    factorOperatorContainer.push(token);
-                    break;
-
-                case PLUS:
-                    termOperatorContainer.push(token);
-                    break;
-
-                case GREATER:
-                case GREATER_EQUAL:
-                case LESS:
-                case LESS_EQUAL:
-                    comparisonOperatorContainer.push(token);
-                    break;
-
-                case EQUAL_EQUAL:
-                case BANG_EQUAL:
-                    equalityOperatorContainer.push(token);
-                    break;
-
-                case AND:
-                    andOperatorContainer.push(token);
-                    break;
-
-                case OR:
-                    orOperatorContainer.push(token);
-                    break;
-
-                case EOF:
-                    break;
-
-                default:
-                    error(String.format("Token %s not allowed.", token));
-                    break;
-            }
-        }
-
-        handle(null);
-    }
-
-    private enum Direction {
-        LEFT, RIGHT
+        return false;
     }
 }
