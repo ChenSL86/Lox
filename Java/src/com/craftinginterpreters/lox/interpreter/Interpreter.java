@@ -2,8 +2,8 @@ package com.craftinginterpreters.lox.interpreter;
 
 import com.craftinginterpreters.lox.expr.Expr;
 import com.craftinginterpreters.lox.expr.ExprVisitor;
-import com.craftinginterpreters.lox.scanner.Token;
-import com.craftinginterpreters.lox.scanner.Type;
+import com.craftinginterpreters.lox.token.Token;
+import com.craftinginterpreters.lox.token.Type;
 
 import java.util.Objects;
 

@@ -5,8 +5,8 @@ import com.craftinginterpreters.lox.parser_deprecated.util.Container;
 import com.craftinginterpreters.lox.parser_deprecated.util.Queue;
 import com.craftinginterpreters.lox.parser_deprecated.util.Stack;
 import com.craftinginterpreters.lox.parser_deprecated.util.TokenContainer;
-import com.craftinginterpreters.lox.scanner.Token;
-import com.craftinginterpreters.lox.scanner.Type;
+import com.craftinginterpreters.lox.token.Token;
+import com.craftinginterpreters.lox.token.Type;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,7 +1,7 @@
 package com.craftinginterpreters.lox.parser_deprecated.util;
 
 import com.craftinginterpreters.lox.expr.Expr;
-import com.craftinginterpreters.lox.scanner.Token;
+import com.craftinginterpreters.lox.token.Token;
 
 import java.util.function.Consumer;
 

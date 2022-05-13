@@ -1,11 +1,11 @@
-package com.craftinginterpreters.lox.scanner;
+package com.craftinginterpreters.lox.token;
 
 public class Token {
     private final Type type;
     private final String text;
     private final int indexInTokenList;
 
-    Token(Type type, String text, int indexInTokenList) {
+    public Token(Type type, String text, int indexInTokenList) {
         this.type = type;
         this.text = text;
         this.indexInTokenList = indexInTokenList;

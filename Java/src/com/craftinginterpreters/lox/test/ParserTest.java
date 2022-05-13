@@ -2,7 +2,7 @@ package com.craftinginterpreters.lox.test;
 
 import com.craftinginterpreters.lox.parser.Parser;
 import com.craftinginterpreters.lox.scanner.Scanner;
-import com.craftinginterpreters.lox.scanner.Token;
+import com.craftinginterpreters.lox.token.Token;
 
 import java.util.List;
 

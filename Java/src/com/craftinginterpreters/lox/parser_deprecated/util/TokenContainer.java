@@ -1,6 +1,6 @@
 package com.craftinginterpreters.lox.parser_deprecated.util;
 
-import com.craftinginterpreters.lox.scanner.Token;
+import com.craftinginterpreters.lox.token.Token;
 
 public class TokenContainer implements Container<Token> {
     private final Container<Token> container;

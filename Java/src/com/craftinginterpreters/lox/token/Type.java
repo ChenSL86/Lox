@@ -1,4 +1,4 @@
-package com.craftinginterpreters.lox.scanner;
+package com.craftinginterpreters.lox.token;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -43,7 +43,7 @@ public enum Type {
         this.text = text;
     }
 
-    static Type from(String text) {
+    public static Type from(String text) {
         return map.get(text);
     }
 
@@ -51,7 +51,7 @@ public enum Type {
         return text;
     }
 
-    boolean peekTwoRequired() {
+    public boolean peekTwoRequired() {
         return this == EQUAL || this == LESS || this == GREATER || this == BANG;
     }
 }

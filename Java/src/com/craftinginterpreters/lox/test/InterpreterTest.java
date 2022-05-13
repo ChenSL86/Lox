@@ -4,7 +4,7 @@ import com.craftinginterpreters.lox.expr.Expr;
 import com.craftinginterpreters.lox.interpreter.Interpreter;
 import com.craftinginterpreters.lox.parser.Parser;
 import com.craftinginterpreters.lox.scanner.Scanner;
-import com.craftinginterpreters.lox.scanner.Token;
+import com.craftinginterpreters.lox.token.Token;
 
 import java.util.List;
 

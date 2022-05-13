@@ -1,6 +1,6 @@
 package com.craftinginterpreters.lox.expr;
 
-import com.craftinginterpreters.lox.scanner.Token;
+import com.craftinginterpreters.lox.token.Token;
 
 public abstract class Expr {
     public abstract <R> R accept(ExprVisitor<R> visitor) throws Exception;
