@@ -1,13 +1,18 @@
 package com.craftinginterpreters.lox.interpreter;
 
+import com.craftinginterpreters.lox.declaration.Declaration;
+import com.craftinginterpreters.lox.declaration.DeclarationVisitor;
 import com.craftinginterpreters.lox.expr.Expr;
 import com.craftinginterpreters.lox.expr.ExprVisitor;
+import com.craftinginterpreters.lox.stmt.Stmt;
+import com.craftinginterpreters.lox.stmt.StmtVisitor;
 import com.craftinginterpreters.lox.token.Token;
 import com.craftinginterpreters.lox.token.Type;
 
+import java.util.List;
 import java.util.Objects;
 
-public class Interpreter implements ExprVisitor<Object> {
+public class Interpreter implements ExprVisitor<Object>, StmtVisitor, DeclarationVisitor {
     @Override
     public Object visitLiteral(Expr.Literal literal) throws Exception {
         Object ret = null;
@@ -205,7 +210,37 @@ public class Interpreter implements ExprVisitor<Object> {
         return interprete(grouping.getExpr());
     }
 
-    public Object interprete(Expr expr) throws Exception {
+    private Object interprete(Expr expr) throws Exception {
         return expr.accept(this);
+    }
+
+    public void execStmt(Stmt stmt) throws Exception {
+        stmt.accept(this);
+    }
+
+    public void execDeclaration(Declaration declaration) throws Exception {
+        declaration.accept(this);
+    }
+
+    public void runProgram(List<Declaration> program) throws Exception {
+        for (Declaration declaration : program) {
+            execDeclaration(declaration);
+        }
+    }
+
+    @Override
+    public void visitExprStmt(Stmt.ExprStmt exprStmt) throws Exception {
+        Object value = interprete(exprStmt.getExpr());
+    }
+
+    @Override
+    public void visitPrintStmt(Stmt.PrintStmt exprStmt) throws Exception {
+        Object value = interprete(exprStmt.getExpr());
+        System.out.println(value == null ? "nil" : String.valueOf(value));
+    }
+
+    @Override
+    public void visitStmt(Stmt stmt) throws Exception {
+        execStmt(stmt);
     }
 }

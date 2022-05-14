@@ -1,9 +1,12 @@
 package com.craftinginterpreters.lox.parser;
 
+import com.craftinginterpreters.lox.declaration.Declaration;
 import com.craftinginterpreters.lox.expr.Expr;
+import com.craftinginterpreters.lox.stmt.Stmt;
 import com.craftinginterpreters.lox.token.Token;
 import com.craftinginterpreters.lox.token.Type;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Parser {
@@ -13,6 +16,43 @@ public class Parser {
 
     public Parser(List<Token> tokenList) {
         this.tokenList = tokenList;
+    }
+
+    public List<Declaration> program() {
+        List<Declaration> declarationList = new ArrayList<>();
+        while (!peek().getType().equals(Type.EOF)) {
+            declarationList.add(declaration());
+        }
+
+        return declarationList;
+    }
+
+    public Declaration declaration() {
+        return new Declaration.StmtDeclaration(statement());
+    }
+
+
+    public Stmt statement() {
+        if (match(peek(), Type.PRINT)) {
+            cursor++;
+            Expr expr = expression();
+            if (match(peek(), Type.SEMICOLON)) {
+                cursor++;
+                return new Stmt.PrintStmt(expr);
+            } else {
+                error("Semicolon required.");
+            }
+        } else {
+            Expr expr = expression();
+            if (match(peek(), Type.SEMICOLON)) {
+                cursor++;
+                return new Stmt.ExprStmt(expr);
+            } else {
+                error("Semicolon required.");
+            }
+        }
+
+        return null;
     }
 
     public Expr expression() {
